@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# firebase initialization file
+firebase_init.py
+
+#assets files
+assets/key.key
+assets/useremail.txt
+assets/userpass.txt
