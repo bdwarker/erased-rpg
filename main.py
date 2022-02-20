@@ -1,15 +1,5 @@
 # Importing modules
 import os
-os.system("pip install pypresence")
-os.system("pip install firebase")
-os.system("pip install cryptography")
-os.system("pip install pycryptodome")
-os.system("pip install pycryptodomex")
-os.system("pip install jwcrypto")
-os.system("pip install jwt")
-os.system("pip install python-jwt")
-os.system("pip install gcloud")
-os.system("pip install sseclient")
 import random
 import time
 import sys
@@ -18,6 +8,8 @@ from firebase_init import firebase
 import getpass
 from cryptography.fernet import Fernet
 from sys import platform
+import colorama
+from colorama import Fore
 client_id = "927479998510669834"  # Put your Client ID in here
 RPC = Presence(client_id)  # Initialize the Presence client
 RPC.connect() # Start the handshake loop
@@ -77,17 +69,23 @@ def fight():
         print(f"Computer: You have {attack} attack!")
         print(f"Computer: You have {defense} defense!")
         # fight
-        while enemy_health > 0 and health > 0:
+        if int(health) < 0:
+            health = 0
+            db.child("users").child(token).child("health").set(health)
+        while enemy_health > 0 and int(health) > 0:
             print("Computer: What would you like to do?")
-            print("Computer: 1. Attack")
-            print("Computer: 2. Defend")
-            print("Computer: 3. Heal")
-            print("Computer: 4. Run")
+            print(f"{Fore.RED}Computer: 1. Attack")
+            print(f"{Fore.YELLOW}Computer: 2. Defend")
+            print(f"{Fore.GREEN}Computer: 3. Heal")
+            print(f"{Fore.BLUE}Computer: 4. Run{Fore.RESET}")
             answer = input("Player: ")
             if answer == "1":
                 enemy_health = enemy_health - attack
                 health = health - enemy_attack
                 print(f"Computer: {enemy_name} has {enemy_health} health!")
+                if int(health) < 0:
+                    health = 0
+                    db.child("users").child(token).child("health").set(health)
                 print(f"Computer: You have {health} health!")
                 db.child("users").child(token).child("health").set(health)
                 FIGHTLOL(enemy_name, enemy_health, enemy_attack, enemy_defense)
@@ -95,21 +93,29 @@ def fight():
                 enemy_health = enemy_health - (attack * 0.5)
                 health = health - (enemy_attack * 0.5)
                 print(f"Computer: {enemy_name} has {enemy_health} health!")
+                if int(health) < 0:
+                    health = 0
+                    db.child("users").child(token).child("health").set(health)
                 print(f"Computer: You have {health} health!")
                 db.child("users").child(token).child("health").set(health)
                 FIGHTLOL(enemy_name, enemy_health, enemy_attack, enemy_defense)
             elif answer == "3":
                 heals = db.child("users").child(token).child("inventory").child("healing_potions").get()
-                if heals is not None and int(heals) != 0:
-                    heals = int(heals)
+                if heals.val() is not None and int(heals.val()) != 0:
+                    heals = int(heals.val())
                     db.child("users").child(token).child("inventory").child("healing_potions").set(heals - 1)
                     health = health + 50
+                    if int(health) < 0:
+                        health = 0
+                        db.child("users").child(token).child("health").set(health)
                     print(f"Computer: You have {health} health!")
                     db.child("users").child(token).child("health").set(health)
                     FIGHTLOL(enemy_name, enemy_health, enemy_attack, enemy_defense)
                 else:
                     print("Computer: You don't have any healing potions!")
-                
+            elif answer == "4":
+                print("Computer: You ran away!")
+                game()
             else:
                 print("Computer: Invalid input!")
                 FIGHTLOL(enemy_name, enemy_health, enemy_attack, enemy_defense)
@@ -124,9 +130,216 @@ def fight():
         elif health <= 0:
             print("Computer: You have been defeated!")
             game()
-    FIGHTLOL(enemy_name, enemy_defense, enemy_health, enemy_attack)
+    FIGHTLOL(enemy_name, enemy_health, enemy_attack, enemy_defense)
         
 
+
+#def play
+def play():
+    token = auth.current_user['localId']
+    print("Computer: You are now playing!")
+    print("Computer: What would you like to do?")
+    print(f"{Fore.RED}Computer: 1. Fight")
+    print(f"{Fore.GREEN}Computer: 2. Heal")
+    print(f"{Fore.BLUE}Computer: 3. Shop")
+    print(f"{Fore.MAGENTA}Computer: 4. Inventory")
+    print(f"{Fore.CYAN}Computer: 5. Stats")
+    print(f"{Fore.LIGHTBLUE_EX}Computer: 6. Logout")
+    print(f"{Fore.LIGHTMAGENTA_EX}Computer: 7. Quit{Fore.RESET}")
+    answer = input("Player: ")
+    if answer == "1":
+        print("Computer: You are now in the fight!")
+        fight()
+    elif answer == "2":
+        #heal
+        heals = db.child("users").child(token).child("inventory").child("healing_potions").get().val()
+        if heals is not None and int(heals) != 0:
+            heals = int(heals)
+            db.child("users").child(token).child("inventory").child("healing_potions").set(heals - 1)
+            health = db.child("users").child(token).child("health").get()
+            health = int(health.val())
+            health = health + 50
+            db.child("users").child(token).child("health").set(health)
+            print("Computer: You have been healed!")
+        else:
+            print("Computer: You don't have any healing potions!")
+        play()
+    elif answer == "3":
+        #shop
+        print("Computer: You are now in the shop!")
+        # add healing potions into the shop
+        print("Computer: What would you like to do?")
+        print(f"{Fore.RED}Computer: 1. Buy healing potions")
+        print(f"{Fore.GREEN}Computer: 2. Buy sword")
+        print(f"{Fore.YELLOW}Computer: 3. Buy shield")
+        print(f"{Fore.BLUE}Computer: 4. Buy armor")
+        print(f"{Fore.MAGENTA}Computer: 5. Go back{Fore.RESET}")
+        answer = input("Player: ")
+        if answer == "1":
+            #buy healing potions using money
+            money = db.child("users").child(token).child("money").get().val()
+            if money is not None and int(money) >= 50:
+                money = int(money)
+                money = money - 50
+                db.child("users").child(token).child("money").set(money)
+                heals = db.child("users").child(token).child("inventory").child("healing_potions").get().val()
+                if heals is not None:
+                    heals = int(heals)
+                    heals = heals + 1
+                    db.child("users").child(token).child("inventory").child("healing_potions").set(heals)
+                    print("Computer: You have bought a healing potion!")
+                    play()
+                else:
+                    db.child("users").child(token).child("inventory").child("healing_potions").set(1)
+                    print("Computer: You have bought a healing potion!")
+                    play()
+            else:
+                print("Computer: You don't have enough money!")
+                play()
+        elif answer == "2":
+            #buy sword
+            money = db.child("users").child(token).child("money").get().val()
+            sword = db.child("users").child(token).child("inventory").child("sword").get().val()
+            if sword is not None:
+                #check if the money is enough
+                if money is not None and int(money) >= 1000:
+                    #check if the attack exeeds the max
+                    attack = db.child("users").child(token).child("attack").get().val()
+                    if attack is not None and int(attack) <= 9999:
+                        money = int(money)
+                        money = money - 1000
+                        db.child("users").child(token).child("money").set(money)
+                        #if you already have a sword
+                        print("Increasing the damage of your sword!")
+                        attack = int(attack)
+                        attack = attack + 10
+                        db.child("users").child(token).child("attack").set(attack)
+                        print(f"Computer: The damage of your sword has increased by 10, now your attack is: {db.child('users').child(token).child('attack').get().val()}!")
+                    else:
+                        print("Computer: You already have the max damage!")
+                else:
+                    print("Computer: You don't have enough money!")
+                play()
+            else:    
+                if money is not None and int(money) >= 500:
+                    money = int(money)
+                    money = money - 500
+                    db.child("users").child(token).child("money").set(money)
+                    db.child("users").child(token).child("inventory").child("sword").set(1)
+                    #increse the attack
+                    attack = db.child("users").child(token).child("attack").get().val()
+                    attack = int(attack)
+                    attack = attack + 10
+                    db.child("users").child(token).child("attack").set(attack)
+                    print("Computer: You have bought a sword!")
+                    #by how much the attack increased
+                    print(f"Computer: The damage of your sword has increased by 10 now your attack is: {db.child('users').child(token).child('attack').get().val()}!")
+                    play()
+        elif answer == "3":
+            #buy shield
+            money = db.child("users").child(token).child("money").get().val()
+            shield = db.child("users").child(token).child("inventory").child("shield").get().val()
+            if shield is not None:
+                print("Computer: You already have a shield!")
+            else:
+                if money is not None and int(money) >= 500:
+                    money = int(money)
+                    money = money - 500
+                    db.child("users").child(token).child("money").set(money)
+                    db.child("users").child(token).child("inventory").child("shield").set(1)
+                    print("Computer: You have bought a shield!")
+                    #increase the defense
+                    defense = db.child("users").child(token).child("defense").get().val()
+                    defense = int(defense)
+                    defense = defense + 5
+                    db.child("users").child(token).child("defense").set(defense)
+                    print(f"Computer: The defense of your shield has increased by 5 now your defense is: {db.child('users').child(token).child('defense').get().val()}!")
+                    play()
+                else:
+                    print("Computer: You don't have enough money!")
+                play()
+        elif answer == "4":
+            #buy armor
+            money = db.child("users").child(token).child("money").get().val()
+            armor = db.child("users").child(token).child("inventory").child("armor").get().val()
+            if armor is not None:
+                #check if the money is enough
+                if money is not None and int(money) >= 1000:
+                    #check if the defense exeeds the max
+                    defense = db.child("users").child(token).child("defense").get().val()
+                    if defense is not None and int(defense) <= 999:
+                        money = int(money)
+                        money = money - 1000
+                        db.child("users").child(token).child("money").set(money)
+                        print("Increasing the defense of your armor!")
+                        defense = int(defense)
+                        defense = defense + 5
+                        db.child("users").child(token).child("defense").set(attack)
+                        print(f"Computer: The defense of your armor has increased by 5, now your defense is: {db.child('users').child(token).child('defense').get().val()}!")
+                    else:
+                        print("Computer: You already have the max defense!")
+                    play()
+                else:
+                    print("Computer: You don't have enough money!")
+                play()
+            else:
+                if money is not None and int(money) >= 500:
+                    money = int(money)
+                    money = money - 500
+                    db.child("users").child(token).child("money").set(money)
+                    db.child("users").child(token).child("inventory").child("armor").set(1)
+                    print("Computer: You have bought a armor!")
+                    #increase the defense
+                    defense = db.child("users").child(token).child("defense").get().val()
+                    defense = int(defense)
+                    defense = defense + 5
+                    db.child("users").child(token).child("defense").set(defense)
+                    print(f"Computer: The defense of your armor has increased by 5, now your defense is: {db.child('users').child(token).child('defense').get().val()}!")
+                    play()
+        elif answer == "5":
+            print("Computer: Going back!")
+            play()
+        else:
+            print("Computer: Invalid answer!")
+        play()
+    elif answer == "4":
+        #inventory
+        print("Computer: You are now in the inventory!")
+        # get the invetnory from the database
+        inventory = db.child("users").child(token).child("inventory").get()
+        if inventory is not None:
+            print("You have the following items:")
+            print(f"{Fore.RED}Healing Potions: " + str(db.child("users").child(token).child("inventory").child("healing_potions").get().val()))
+            print(f"{Fore.GREEN}Sword: " + str(db.child("users").child(token).child("inventory").child("sword").get().val()))
+            print(f"{Fore.YELLOW}Shield: " + str(db.child("users").child(token).child("inventory").child("shield").get().val()))
+            print(f"{Fore.BLUE}Armor: " + str(db.child("users").child(token).child("inventory").child("armor").get().val()))
+            print(f"{Fore.CYAN}Money: " + str(db.child("users").child(token).child("money").get().val()) + Fore.RESET)
+        play()
+    elif answer == "5":
+        health = db.child("users").child(token).child("health").get()
+        attack = db.child("users").child(token).child("attack").get()
+        defense = db.child("users").child(token).child("defense").get()
+        money = db.child("users").child(token).child("money").get()
+        level = db.child("users").child(token).child("level").get()
+        exp = db.child("users").child(token).child("exp").get()
+        print(f"""Computer: Your stats are:
+{Fore.RED}Health: {health.val()}
+{Fore.BLUE}Attack: {attack.val()}
+{Fore.GREEN}Defense: {defense.val()}
+{Fore.YELLOW}Money: {money.val()}
+{Fore.MAGENTA}Level: {level.val()} {Fore.RESET}""")
+        play()    
+    elif answer == "6":
+        os.remove("./assets/useremail.txt")
+        os.remove("./assets/userpass.txt")
+        print("Computer: You are now logged out!")
+        newPlayer()
+    elif answer == "7":
+        print("Computer: You are now quitting!")
+        quit()
+    else:
+        print("Computer: Invalid input!")
+        play()
 
 
 #def game
@@ -135,215 +348,12 @@ def game():
     token = auth.current_user['localId']
     print("Computer: Welcome back!")
     print("Computer: What would you like to do?")
-    print("Computer: 1. Play")
-    print("Computer: 2. Logout")
-    print("Computer: 3. Quit")
+    print(f"{Fore.GREEN}Computer: 1. Play")
+    print(f"{Fore.YELLOW}Computer: 2. Logout")
+    print(f"{Fore.RED}Computer: 3. Quit{Fore.RESET}")
     answer = input("Player: ")
     if answer == "1":
-        print("Computer: You are now playing!")
-        print("Computer: What would you like to do?")
-        print("Computer: 1. Fight")
-        print("Computer: 2. Heal")
-        print("Computer: 3. Shop")
-        print("Computer: 4. Inventory")
-        print("Computer: 5. Stats")
-        print("Computer: 6. Logout")
-        print("Computer: 7. Quit")
-        answer = input("Player: ")
-        if answer == "1":
-            print("Computer: You are now in the fight!")
-            fight()
-        elif answer == "2":
-            #heal
-            heals = db.child("users").child(token).child("inventory").child("healing_potions").get().val()
-            if heals is not None and int(heals) != 0:
-                heals = int(heals)
-                db.child("users").child(token).child("inventory").child("healing_potions").set(heals - 1)
-                health = db.child("users").child(token).child("health").get()
-                health = int(health.val())
-                health = health + 50
-                db.child("users").child(token).child("health").set(health)
-                print("Computer: You have been healed!")
-            else:
-                print("Computer: You don't have any healing potions!")
-            game()
-        elif answer == "3":
-            #shop
-            print("Computer: You are now in the shop!")
-            # add healing potions into the shop
-            print("Computer: What would you like to do?")
-            print("Computer: 1. Buy healing potions")
-            print("Computer: 2. Buy sword")
-            print("Computer: 3. Buy shield")
-            print("Computer: 4. Buy armor")
-            print("Computer: 5. Go back")
-            answer = input("Player: ")
-            if answer == "1":
-                #buy healing potions using money
-                money = db.child("users").child(token).child("money").get().val()
-                if money is not None and int(money) >= 50:
-                    money = int(money)
-                    money = money - 50
-                    db.child("users").child(token).child("money").set(money)
-                    heals = db.child("users").child(token).child("inventory").child("healing_potions").get().val()
-                    if heals is not None:
-                        heals = int(heals)
-                        heals = heals + 1
-                        db.child("users").child(token).child("inventory").child("healing_potions").set(heals)
-                        print("Computer: You have bought a healing potion!")
-                        game()
-                    else:
-                        db.child("users").child(token).child("inventory").child("healing_potions").set(1)
-                        print("Computer: You have bought a healing potion!")
-                        game()
-                else:
-                    print("Computer: You don't have enough money!")
-                    game()
-            elif answer == "2":
-                #buy sword
-                money = db.child("users").child(token).child("money").get().val()
-                sword = db.child("users").child(token).child("inventory").child("sword").get().val()
-                if sword is not None:
-                    #check if the money is enough
-                    if money is not None and int(money) >= 1000:
-                        #check if the attack exeeds the max
-                        attack = db.child("users").child(token).child("attack").get().val()
-                        if attack is not None and int(attack) <= 9999:
-                            money = int(money)
-                            money = money - 1000
-                            db.child("users").child(token).child("money").set(money)
-                            #if you already have a sword
-                            print("Increasing the damage of your sword!")
-                            sword = int(sword)
-                            sword = sword + 10
-                            db.child("users").child(token).child("inventory").child("sword").set(sword)
-                            print(f"Computer: The damage of your sword has increased by 10, now your attack is: {db.child('users').child(token).child('attack').get().val()}!")
-                        else:
-                            print("Computer: You already have the max damage!")
-                    else:
-                        print("Computer: You don't have enough money!")
-                    game()
-                else:    
-                    if money is not None and int(money) >= 500:
-                        money = int(money)
-                        money = money - 500
-                        db.child("users").child(token).child("money").set(money)
-                        db.child("users").child(token).child("inventory").child("sword").set(1)
-                        #increse the attack
-                        attack = db.child("users").child(token).child("attack").get().val()
-                        attack = int(attack)
-                        attack = attack + 10
-                        db.child("users").child(token).child("attack").set(attack)
-                        print("Computer: You have bought a sword!")
-                        #by how much the attack increased
-                        print(f"Computer: The damage of your sword has increased by 10 now your attack is: {db.child('users').child(token).child('attack').get().val()}!")
-                        game()
-            elif answer == "3":
-                #buy shield
-                money = db.child("users").child(token).child("money").get().val()
-                shield = db.child("users").child(token).child("inventory").child("shield").get().val()
-                if shield is not None:
-                    print("Computer: You already have a shield!")
-                else:
-                    if money is not None and int(money) >= 500:
-                        money = int(money)
-                        money = money - 500
-                        db.child("users").child(token).child("money").set(money)
-                        db.child("users").child(token).child("inventory").child("shield").set(1)
-                        print("Computer: You have bought a shield!")
-                        #increase the defense
-                        defense = db.child("users").child(token).child("defense").get().val()
-                        defense = int(defense)
-                        defense = defense + 5
-                        db.child("users").child(token).child("defense").set(defense)
-                        print(f"Computer: The defense of your shield has increased by 5 now your defense is: {db.child('users').child(token).child('defense').get().val()}!")
-                        game()
-                    else:
-                        print("Computer: You don't have enough money!")
-                    game()
-            elif answer == "4":
-                #buy armor
-                money = db.child("users").child(token).child("money").get().val()
-                armor = db.child("users").child(token).child("inventory").child("armor").get().val()
-                if armor is not None:
-                    #check if the money is enough
-                    if money is not None and int(money) >= 1000:
-                        #check if the defense exeeds the max
-                        defense = db.child("users").child(token).child("defense").get().val()
-                        if defense is not None and int(defense) <= 999:
-                            money = int(money)
-                            money = money - 1000
-                            db.child("users").child(token).child("money").set(money)
-                            print("Increasing the defense of your armor!")
-                            armor = int(armor)
-                            armor = armor + 5
-                            db.child("users").child(token).child("inventory").child("armor").set(armor)
-                            print(f"Computer: The defense of your armor has increased by 5, now your defense is: {db.child('users').child(token).child('defense').get().val()}!")
-                        else:
-                            print("Computer: You already have the max defense!")
-                        game()
-                    else:
-                        print("Computer: You don't have enough money!")
-                    game()
-                else:
-                    if money is not None and int(money) >= 500:
-                        money = int(money)
-                        money = money - 500
-                        db.child("users").child(token).child("money").set(money)
-                        db.child("users").child(token).child("inventory").child("armor").set(1)
-                        print("Computer: You have bought a armor!")
-                        #increase the defense
-                        defense = db.child("users").child(token).child("defense").get().val()
-                        defense = int(defense)
-                        defense = defense + 5
-                        db.child("users").child(token).child("defense").set(defense)
-                        print(f"Computer: The defense of your armor has increased by 5, now your defense is: {db.child('users').child(token).child('defense').get().val()}!")
-                        game()
-            elif answer == "5":
-                print("Computer: Going back!")
-                game()
-            else:
-                print("Computer: Invalid answer!")
-            game()
-        elif answer == "4":
-            #inventory
-            print("Computer: You are now in the inventory!")
-            # get the invetnory from the database
-            inventory = db.child("users").child(token).child("inventory").get()
-            if inventory is not None:
-                print("You have the following items:")
-                print("Healing Potions: " + str(db.child("users").child(token).child("inventory").child("healing_potions").get().val()))
-                print("Sword: " + str(db.child("users").child(token).child("inventory").child("sword").get().val()))
-                print("Shield: " + str(db.child("users").child(token).child("inventory").child("shield").get().val()))
-                print("Armor: " + str(db.child("users").child(token).child("inventory").child("armor").get().val()))
-                print("Money: " + str(db.child("users").child(token).child("money").get().val()))
-            game()
-        elif answer == "5":
-            health = db.child("users").child(token).child("health").get()
-            attack = db.child("users").child(token).child("attack").get()
-            defense = db.child("users").child(token).child("defense").get()
-            money = db.child("users").child(token).child("money").get()
-            level = db.child("users").child(token).child("level").get()
-            exp = db.child("users").child(token).child("exp").get()
-            print(f"""Computer: Your stats are:
-Health: {health.val()}
-Attack: {attack.val()}
-Defense: {defense.val()}
-Money: {money.val()}
-Level: {level.val()}""")
-            game()
-            
-        elif answer == "6":
-            os.remove("./assets/useremail.txt")
-            os.remove("./assets/userpass.txt")
-            print("Computer: You are now logged out!")
-            newPlayer()
-        elif answer == "7":
-            print("Computer: You are now quitting!")
-            quit()
-        else:
-            print("Computer: Invalid input!")
-            game()
+        play()
     elif answer == "2":
         os.remove("./assets/useremail.txt")
         os.remove("./assets/userpass.txt")
@@ -438,7 +448,7 @@ def newPlayer():
         password = getpass.getpass("Player: ")
         try:
             user = auth.create_user_with_email_and_password(email, password)
-            token=user['localId']
+            token=auth.current_user['localId']
             isUserInDB = db.child("users").child(token).get()
             if isUserInDB.val() == None:
                 print("Computer: You are now creating a new account!")

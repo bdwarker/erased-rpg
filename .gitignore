@@ -135,3 +135,6 @@ firebase_init.py
 assets/key.key
 assets/useremail.txt
 assets/userpass.txt
+
+#app file
+ErasedRPG.py
