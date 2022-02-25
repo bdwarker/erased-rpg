@@ -1,5 +1,5 @@
 # Erased RPG
 
-![Erased RPG](http://url/to/img.png)
+![Erased RPG](https://github.com/Unerasable/erased-rpg/blob/main/assets/erasedrpg.png?raw=True)
 
 ## A RPG Game that uses firebase auth and database and you can play it in the terminal!
